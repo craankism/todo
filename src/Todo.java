@@ -71,7 +71,7 @@ public class Todo {
 
                 case "4" -> {
                     System.out.println("Enter task number to delete:");
-                    String taskToDelete = userInput.nextLine();
+                    //String taskToDelete = userInput.nextLine();
                     // Task deletion logic would go here
                     System.out.println("Task deletion feature not yet implemented.");
                 }
