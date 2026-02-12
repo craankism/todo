@@ -7,6 +7,7 @@
 - [x] ~~Responsive layout added~~
 - [ ] Add persistence (local storage or backend)
 - [ ] Improve accessibility
+- [ ] CI/CD workflow
 
 ## 🧰 Languages Used
 
