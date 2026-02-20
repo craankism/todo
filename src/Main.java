@@ -13,6 +13,9 @@ public class Main extends Application {
         Parent root = FXMLLoader.load(getClass().getResource("MainScene.fxml"));
         primaryStage.setTitle("To-Do List");
         primaryStage.setScene(new Scene(root, 600, 400));
+        primaryStage.setMinHeight(400);
+        primaryStage.setMinWidth(600);
+        primaryStage.setMaxWidth(600);
         primaryStage.show();
     }
 
