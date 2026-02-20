@@ -13,7 +13,7 @@ import java.util.List;
 public class Controller {
 
     @FXML
-    private FlowPane rootPane;
+    private FlowPane flowPane;
 
     private final List<CheckBox> checkBoxes = new ArrayList<>();
     private final List<TextField> textFields = new ArrayList<>();
@@ -28,8 +28,9 @@ public class Controller {
         TextField textField = new TextField();
 
         textField.setPrefHeight(26.0);
-        textField.setPrefWidth(518.0);
-        FlowPane.setMargin(textField, new Insets(0, 0, 0, 20.0));
+        textField.setPrefWidth(530.0);
+        FlowPane.setMargin(textField, new Insets(10.0, 0, 0, 20.0));
+        FlowPane.setMargin(checkBox, new Insets(10.0, 0, 0, 0));
 
         // Crossout: toggle strikethrough when checkbox is checked
         checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
@@ -56,15 +57,21 @@ public class Controller {
 
         checkBoxes.add(checkBox);
         textFields.add(textField);
-        rootPane.getChildren().addAll(checkBox, textField);
+        flowPane.getChildren().addAll(checkBox, textField);
+        /* Print value of third TextField if available
+        if (textFields.size() > 2) {
+            System.out.println("textFields[2] value: " + textFields.get(2).getText());
+        } */
     }
 
     private void removeRow(TextField textField) {
         int index = textFields.indexOf(textField);
-        if (index < 0) return;
+        if (index < 0)
+            return;
 
         CheckBox cb = checkBoxes.remove(index);
         TextField tf = textFields.remove(index);
-        rootPane.getChildren().removeAll(cb, tf);
+        flowPane.getChildren().removeAll(cb, tf);
     }
+
 }
