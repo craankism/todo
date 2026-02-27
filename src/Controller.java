@@ -1,12 +1,16 @@
 package src;
 
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +18,11 @@ public class Controller {
 
     @FXML
     private FlowPane flowPane;
+
+    @FXML
+    void save(ActionEvent event) {
+        save();
+    }
 
     private final List<CheckBox> checkBoxes = new ArrayList<>();
     private final List<TextField> textFields = new ArrayList<>();
@@ -58,10 +67,6 @@ public class Controller {
         checkBoxes.add(checkBox);
         textFields.add(textField);
         flowPane.getChildren().addAll(checkBox, textField);
-        /* Print value of third TextField if available
-        if (textFields.size() > 2) {
-            System.out.println("textFields[2] value: " + textFields.get(2).getText());
-        } */
     }
 
     private void removeRow(TextField textField) {
@@ -74,4 +79,23 @@ public class Controller {
         flowPane.getChildren().removeAll(cb, tf);
     }
 
+    private void save() {
+
+        try (BufferedWriter textWriter = new BufferedWriter(new FileWriter("save.txt"))) {
+            for (int i = 0; i < textFields.size(); i++) {
+                textWriter.write(textFields.get(i).getText());
+                textWriter.newLine();
+            }
+                System.out.println("Successfully wrote to the file.");
+            } catch (IOException e) {
+                System.out.println("Error writing file.");
+            }
+        }
+
+    /* for(
+
+    int i = 0;i<textFields.size();i++)
+    {
+        System.out.printf("textFields[%d] value: %s%n", i, textFields.get(i).getText());
+    }*/
 }
