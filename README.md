@@ -19,5 +19,6 @@
 - GUI with JavaFX and SceneBuilder
 - New rows are created, when a task description is filled
 - if a description is removed, the empty row beneath it, will also be removed
+- Add new rows, when a row is filled
 
 
