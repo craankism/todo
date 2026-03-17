@@ -10,6 +10,8 @@ import javafx.scene.layout.FlowPane;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +29,11 @@ public class Controller {
     private final List<CheckBox> checkBoxes = new ArrayList<>();
     private final List<TextField> textFields = new ArrayList<>();
 
+    private boolean isLoading = false;
+
     @FXML
     private void initialize() {
+        load();
         addNewRow();
     }
 
@@ -52,6 +57,10 @@ public class Controller {
 
         // Auto-add / auto-remove rows based on text changes
         textField.textProperty().addListener((obs, oldText, newText) -> {
+            if (isLoading) {
+                return;
+            }
+
             int index = textFields.indexOf(textField);
             boolean isLastRow = (index == textFields.size() - 1);
 
@@ -83,19 +92,50 @@ public class Controller {
 
         try (BufferedWriter textWriter = new BufferedWriter(new FileWriter("save.txt"))) {
             for (int i = 0; i < textFields.size(); i++) {
-                textWriter.write(textFields.get(i).getText());
+                String text = textFields.get(i).getText();
+                if (text == null || text.trim().isEmpty()) {
+                    continue;
+                }
+                textWriter.write(Boolean.toString(checkBoxes.get(i).isSelected()));
+                textWriter.newLine();
+                textWriter.write(text);
                 textWriter.newLine();
             }
-                System.out.println("Successfully wrote to the file.");
-            } catch (IOException e) {
-                System.out.println("Error writing file.");
-            }
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.out.println("Error writing file.");
         }
+    }
 
-    /* for(
+    private void load() {
+        isLoading = true;
+        try (BufferedReader textReader = new BufferedReader(new FileReader("save.txt"))) {
+            String lineCheckbox;
+            String lineText;
+            int i = 0;
 
-    int i = 0;i<textFields.size();i++)
-    {
-        System.out.printf("textFields[%d] value: %s%n", i, textFields.get(i).getText());
-    }*/
+            while ((lineCheckbox = textReader.readLine()) != null) {
+                lineText = textReader.readLine();
+                if (lineText == null) {
+                    break;
+                }
+
+                if (lineText.trim().isEmpty()) {
+                    continue;
+                }
+
+                System.out.println(lineCheckbox);
+                System.out.println(lineText);
+                addNewRow();
+                checkBoxes.get(i).setSelected(Boolean.parseBoolean(lineCheckbox));
+                textFields.get(i).setText(lineText);
+                i++;
+            }
+            System.out.println("Successfully read file.");
+        } catch (IOException e) {
+            System.out.println("Error reading file.");
+        } finally {
+            isLoading = false;
+        }
+    }
 }
