@@ -1,4 +1,5 @@
 # To‑Do List Project
+WIP
 
 ## ✅ Example
 
@@ -20,5 +21,6 @@
 - New rows are created, when a task description is filled
 - if a description is removed, the empty row beneath it, will also be removed
 - Add new rows, when a row is filled
+- Save button, saves to textfile and loads content when opening the program
 
 

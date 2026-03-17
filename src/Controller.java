@@ -10,6 +10,8 @@ import javafx.scene.layout.FlowPane;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,7 @@ public class Controller {
 
     @FXML
     private void initialize() {
+        load();
         addNewRow();
     }
 
@@ -83,19 +86,37 @@ public class Controller {
 
         try (BufferedWriter textWriter = new BufferedWriter(new FileWriter("save.txt"))) {
             for (int i = 0; i < textFields.size(); i++) {
+                textWriter.write(Boolean.toString(checkBoxes.get(i).isSelected()));
+                textWriter.newLine();
                 textWriter.write(textFields.get(i).getText());
                 textWriter.newLine();
             }
-                System.out.println("Successfully wrote to the file.");
-            } catch (IOException e) {
-                System.out.println("Error writing file.");
-            }
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            System.out.println("Error writing file.");
         }
+    }
 
-    /* for(
-
-    int i = 0;i<textFields.size();i++)
-    {
-        System.out.printf("textFields[%d] value: %s%n", i, textFields.get(i).getText());
-    }*/
+    private void load() {
+        try (BufferedReader textReader = new BufferedReader(new FileReader("save.txt"))) {
+            String lineCheckbox, lineText;
+            int i = 0;
+            while ((textReader.readLine()) != null) {
+                lineCheckbox = textReader.readLine();
+                lineText = textReader.readLine();
+                if (lineText.trim().isEmpty())
+                    continue;
+                System.out.println(lineCheckbox);
+                System.out.println(lineText);
+                addNewRow();
+                textReader.readLine();
+                checkBoxes.get(i).setSelected(Boolean.parseBoolean(lineCheckbox));
+                textFields.get(i).setText(lineText);
+                i++;
+            }
+            System.out.println("Successfully read file.");
+        } catch (IOException e) {
+            System.out.println("Error reading file.");
+        }
+    }
 }
