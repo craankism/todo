@@ -29,6 +29,8 @@ public class Controller {
     private final List<CheckBox> checkBoxes = new ArrayList<>();
     private final List<TextField> textFields = new ArrayList<>();
 
+    private boolean isLoading = false;
+
     @FXML
     private void initialize() {
         load();
@@ -55,6 +57,10 @@ public class Controller {
 
         // Auto-add / auto-remove rows based on text changes
         textField.textProperty().addListener((obs, oldText, newText) -> {
+            if (isLoading) {
+                return;
+            }
+
             int index = textFields.indexOf(textField);
             boolean isLastRow = (index == textFields.size() - 1);
 
@@ -86,9 +92,13 @@ public class Controller {
 
         try (BufferedWriter textWriter = new BufferedWriter(new FileWriter("save.txt"))) {
             for (int i = 0; i < textFields.size(); i++) {
+                String text = textFields.get(i).getText();
+                if (text == null || text.trim().isEmpty()) {
+                    continue;
+                }
                 textWriter.write(Boolean.toString(checkBoxes.get(i).isSelected()));
                 textWriter.newLine();
-                textWriter.write(textFields.get(i).getText());
+                textWriter.write(text);
                 textWriter.newLine();
             }
             System.out.println("Successfully wrote to the file.");
@@ -98,18 +108,25 @@ public class Controller {
     }
 
     private void load() {
+        isLoading = true;
         try (BufferedReader textReader = new BufferedReader(new FileReader("save.txt"))) {
-            String lineCheckbox, lineText;
+            String lineCheckbox;
+            String lineText;
             int i = 0;
-            while ((textReader.readLine()) != null) {
-                lineCheckbox = textReader.readLine();
+
+            while ((lineCheckbox = textReader.readLine()) != null) {
                 lineText = textReader.readLine();
-                if (lineText.trim().isEmpty())
+                if (lineText == null) {
+                    break;
+                }
+
+                if (lineText.trim().isEmpty()) {
                     continue;
+                }
+
                 System.out.println(lineCheckbox);
                 System.out.println(lineText);
                 addNewRow();
-                textReader.readLine();
                 checkBoxes.get(i).setSelected(Boolean.parseBoolean(lineCheckbox));
                 textFields.get(i).setText(lineText);
                 i++;
@@ -117,6 +134,8 @@ public class Controller {
             System.out.println("Successfully read file.");
         } catch (IOException e) {
             System.out.println("Error reading file.");
+        } finally {
+            isLoading = false;
         }
     }
 }
