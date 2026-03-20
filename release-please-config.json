@@ -1,0 +1,11 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "java",
+      "package-name": "To-Do-List",
+      "extra-files": [
+        "README.md"
+      ]
+    }
+  }
+}

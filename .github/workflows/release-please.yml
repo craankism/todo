@@ -21,11 +21,6 @@ jobs:
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: java
-          package-name: To-Do-List
-          default-branch: main
-          extra-files: |
-            README.md
 
   build-exe:
     needs: release-please
