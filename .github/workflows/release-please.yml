@@ -13,8 +13,12 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: java
@@ -22,3 +26,122 @@ jobs:
           default-branch: main
           extra-files: |
             README.md
+
+  build-exe:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download JavaFX SDK
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_windows-x64_bin-sdk.zip" -OutFile javafx-sdk.zip
+          Expand-Archive -Path javafx-sdk.zip -DestinationPath javafx
+          echo "JAVAFX_HOME=${{ github.workspace }}\javafx\javafx-sdk-21.0.2" >> $env:GITHUB_ENV
+
+      - name: Download JavaFX jmods
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_windows-x64_bin-jmods.zip" -OutFile javafx-jmods.zip
+          Expand-Archive -Path javafx-jmods.zip -DestinationPath javafx-jmods
+          echo "JAVAFX_JMODS=${{ github.workspace }}\javafx-jmods\javafx-jmods-21.0.2" >> $env:GITHUB_ENV
+
+      - name: Compile
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build\classes
+          javac --module-path "$env:JAVAFX_HOME\lib" --add-modules javafx.controls,javafx.fxml -d build\classes src\*.java
+          Copy-Item src\MainScene.fxml build\classes\src\
+          Copy-Item src\style.css build\classes\src\
+
+      - name: Create JAR
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path build\jar
+          jar --create --file build\jar\todo.jar --main-class src.Main -C build\classes .
+
+      - name: Package .exe with jpackage
+        shell: pwsh
+        run: |
+          jpackage `
+            --input build\jar `
+            --main-jar todo.jar `
+            --main-class src.Main `
+            --name To-Do-List `
+            --type exe `
+            --module-path "$env:JAVAFX_JMODS" `
+            --add-modules javafx.controls,javafx.fxml `
+            --dest build\installer `
+            --win-shortcut `
+            --win-menu
+
+      - name: Upload .exe to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $exe = Get-ChildItem -Path build\installer\*.exe | Select-Object -First 1
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" "$($exe.FullName)" --clobber
+
+  build-dmg:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Download JavaFX SDK
+        run: |
+          curl -L -o javafx-sdk.zip "https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_osx-aarch64_bin-sdk.zip"
+          unzip javafx-sdk.zip -d javafx
+          echo "JAVAFX_HOME=${{ github.workspace }}/javafx/javafx-sdk-21.0.2" >> "$GITHUB_ENV"
+
+      - name: Download JavaFX jmods
+        run: |
+          curl -L -o javafx-jmods.zip "https://download2.gluonhq.com/openjfx/21.0.2/openjfx-21.0.2_osx-aarch64_bin-jmods.zip"
+          unzip javafx-jmods.zip -d javafx-jmods
+          echo "JAVAFX_JMODS=${{ github.workspace }}/javafx-jmods/javafx-jmods-21.0.2" >> "$GITHUB_ENV"
+
+      - name: Compile
+        run: |
+          mkdir -p build/classes
+          javac --module-path "$JAVAFX_HOME/lib" --add-modules javafx.controls,javafx.fxml -d build/classes src/*.java
+          cp src/MainScene.fxml build/classes/src/
+          cp src/style.css build/classes/src/
+
+      - name: Create JAR
+        run: |
+          mkdir -p build/jar
+          jar --create --file build/jar/todo.jar --main-class src.Main -C build/classes .
+
+      - name: Package .dmg with jpackage
+        run: |
+          jpackage \
+            --input build/jar \
+            --main-jar todo.jar \
+            --main-class src.Main \
+            --name To-Do-List \
+            --type dmg \
+            --module-path "$JAVAFX_JMODS" \
+            --add-modules javafx.controls,javafx.fxml \
+            --dest build/installer
+
+      - name: Upload .dmg to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.release-please.outputs.tag_name }}" build/installer/*.dmg --clobber
